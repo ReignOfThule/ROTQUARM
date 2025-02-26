@@ -81,7 +81,7 @@ public:
 	void SetRaidLeader(const char *wasLead, const char *name);
 	uint32 GetLeaderGuildID();
 
-	inline bool GetEngageCachedResult() { return raid_engage_check_result;	}
+	inline bool GetEngageCachedResult() { return true;	} //always return true? not sure what this is for exactly. Are guilds not allowed to attack same raid boss on Quarm?
 
 	bool	Process();
 	bool	IsRaid() { return true; }

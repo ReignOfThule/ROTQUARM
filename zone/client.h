@@ -297,6 +297,17 @@ public:
 
 	bool	CheckDeath();
 
+	bool CanPvP(Client * c);
+	bool PVPLevelDifference(uint8 other_level);
+	bool PVPLevelDifference(Client * c);
+	bool WorldPVPUseGuildBasedPVP(Client * c);
+	bool WorldPVPUseTeamsBySizeBasedPVP(Client * c);
+	bool WorldPVPUseDeityBasedPVP(Client * c);
+	int WorldPVPMinLevel();
+ 	int GetAlignment();
+	int GetPVPRaceTeamBySize();
+	
+
 	void	AI_Init();
 	void	AI_Start();
 	void	AI_Stop();

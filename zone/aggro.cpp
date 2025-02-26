@@ -1014,34 +1014,37 @@ bool Mob::IsAttackAllowed(Mob *target, bool isSpellAttack, int16 spellid)
 				c1 = mob1->CastToClient();
 				c2 = mob2->CastToClient();
 
-				if	// if both are pvp they can fight
-				(
-					(bool)c1->GetPVP() &&
-					(bool)c2->GetPVP() && 
-					zone && zone->GetGuildID() == 1
-				)
-					return true;
-				else if	// if they're dueling they can go at it
-				(
-					c1->IsDueling() &&
-					c2->IsDueling() &&
-					c1->GetDuelTarget() == c2->GetID() &&
-					c2->GetDuelTarget() == c1->GetID() && zone->GetGuildID() != 1
-				)
-					return true;
-				else if (zone->watermap != nullptr)
+				if(RuleI(PVP, Settings) >= 0) //Enable PvP -1 disables PvP
 				{
-					glm::vec3 mypos (c1->GetX(), c1->GetY(), c1->GetZ());
-					glm::vec3 opos (c2->GetX(), c2->GetY(), c2->GetZ());
-					if 
-					(
-						zone->watermap->InPVP(mypos) &&
-						zone->watermap->InPVP(opos)
-					)
-							return true;
-				}	
+					return c1->CanPvP(c2);
+				}
 				else
-					return false;
+				{
+
+					if(c1->GetPVP() && c2->GetPVP())
+						return true;
+					else if	// if they're dueling they can go at it
+					(
+						c1->IsDueling() &&
+						c2->IsDueling() &&
+						c1->GetDuelTarget() == c2->GetID() &&
+						c2->GetDuelTarget() == c1->GetID() && zone->GetGuildID() != 1
+					)
+						return true;
+					else if (zone->watermap != nullptr)
+					{
+						glm::vec3 mypos (c1->GetX(), c1->GetY(), c1->GetZ());
+						glm::vec3 opos (c2->GetX(), c2->GetY(), c2->GetZ());
+						if 
+						(
+							zone->watermap->InPVP(mypos) &&
+							zone->watermap->InPVP(opos)
+						)
+								return true;
+					}	
+					else
+						return false;
+				}
 			}
 			else if(_NPC(mob2))				// client vs npc
 			{

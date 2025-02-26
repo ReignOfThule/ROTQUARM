@@ -3,31 +3,23 @@
 void command_leaderboard(Client *c, const Seperator *sep)
 {
 	if (sep->arg[1][0] == 0) {
-		c->Message(Chat::White, "Usage: #leaderboard [SFHC|SSFHC|SFHCOnly|HC]");
+		c->Message(Chat::White, "Usage: #leaderboard [kills|infamy]");
 		return;
 	}
 
-	std::string query = "SELECT level, class, name, race, e_solo_only, e_self_found FROM character_data WHERE ";
+	std::string query = "SELECT level, class, name, race, pvp_kills, infamy FROM character_data WHERE ";
 
-	if(strncasecmp(sep->arg[1], "SFHCOnly", 8) == 0)
+	if(strncasecmp(sep->arg[1], "kills", 5) == 0)
 	{
-		query += "e_solo_only = 0 AND e_self_found = 1 AND e_hardcore = 1";
+		query += "pvp_kills > 0";
 	}
-	else if(strncasecmp(sep->arg[1], "SFHC", 4) == 0)
+	else if(strncasecmp(sep->arg[1], "infamy", 6) == 0)
 	{
-		query += "e_self_found = 1 AND e_hardcore = 1";
-	}
-	else if(strncasecmp(sep->arg[1], "SSFHC", 5) == 0)
-	{
-		query += "e_solo_only = 1 AND e_self_found = 1 AND e_hardcore = 1";
-	}
-	else if(strncasecmp(sep->arg[1], "HC", 2) == 0)
-	{
-		query += "e_hardcore = 1";
+		query += "infamy > 0";
 	}
 	else
 	{
-		c->Message(Chat::White, "Usage: #leaderboard [SFHC|SSFHC|SFHCOnly|HC]");
+		c->Message(Chat::White, "Usage: #leaderboard [kills|infamy]");
 		return;
 	}
 
@@ -51,14 +43,14 @@ void command_leaderboard(Client *c, const Seperator *sep)
 			break;
 		}
 
-		bool IsSolo = strcmp(row[4], "1") == 0; 
-		bool IsSelfFound = strcmp(row[5], "1") == 0; 
+		bool IsSolo = strcmp(row[5], "1") == 0; 
+		bool IsSelfFound = strcmp(row[6], "1") == 0; 
 
 		std::string SSFTag = "";
 		if(IsSolo)
-			SSFTag += "Solo ";
+			SSFTag += "Kills ";
 		if(IsSelfFound)
-			SSFTag += "Self Found";
+			SSFTag += "Infamy";
 
 		// Convert race and class to strings
 		c->Message(Chat::White, "[%s %s] %s (%s) - %s", row[0], GetClassIDName(std::stoi(row[1]), std::stoi(row[0])), row[2], GetRaceIDName(std::stoi(row[3])), SSFTag.c_str());

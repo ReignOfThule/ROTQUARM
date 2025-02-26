@@ -8009,3 +8009,117 @@ void Client::CheckClientToNpcAggroTimer()
 		m_client_npc_aggro_scan_timer.Start(scan_npc_aggro_timer_idle);
 	}
 }
+
+bool Client::CanPvP(Client *c) {
+	if (c == nullptr)
+		return false;
+
+	if(GetPVP() == false || c->GetPVP() == false)
+		return false;
+
+	// Can't PVP while ridding on a passenger boat but not a controllable boat
+	if ((GetBoatID() >= 1 || c->GetBoatID() >= 1))
+		return false;
+
+	// No PvP in Bazaar and Nexus
+	if (zone->GetZoneID() == Zones::BAZAAR || zone->GetZoneID() == Zones::NEXUS)
+		return false;
+
+
+
+	//Dueling overrides normal PvP logic
+	if (IsDueling() && c->IsDueling() && GetDuelTarget() == c->GetID() && c->GetDuelTarget() == GetID())
+		return true;
+
+	//if (zone->GetFFA() || c->GetFFA()) -- Enable this soon
+	//	return true;
+
+	// Is target required level for pvp
+	if (GetLevel() < WorldPVPMinLevel() || c->GetLevel() < WorldPVPMinLevel())
+	{
+		LogDebug("Client::CanPvP World:WorldPVPMinLevel Failed, Level [{}], Target Level [{}], Min Level Rule [{}]", GetLevel(), c->GetLevel(), WorldPVPMinLevel());
+		return false;
+	}
+	else
+	{
+		LogDebug("Client::CanPvP World:WorldPVPMinLevel Passed, Level [{}], Target Level [{}], Min Level Rule [{}]", GetLevel(), c->GetLevel(), WorldPVPMinLevel());
+	}
+
+	// Determine if clients are in range
+	if (!PVPLevelDifference(c))
+		return false;
+
+	return true;
+}
+
+int Client::WorldPVPMinLevel()
+{
+	int rule_min_level = RuleI(PVP, MinLevel);
+
+	// If rule is set to anything other than 0 its custom
+	if(rule_min_level == 0)
+	{
+		switch(RuleI(PVP, Settings))
+		{
+			case 1: // Rallos Zek
+				rule_min_level = 6;
+			break;
+
+			case 2: // Vallon/Tallon Zek (Size)
+				rule_min_level = 6;
+			break;
+
+			case 3: // Vallon/Tallon Zek (Guild)
+				rule_min_level = 6;
+			break;
+
+			case 4: // Sullon Zek
+				rule_min_level = 6;
+			break;
+		}
+	}
+	return rule_min_level;
+}
+
+
+bool Client::PVPLevelDifference(uint8 other_level)
+{
+	int rule_level_diff = RuleI(PVP, LevelDifference);
+
+	// If rule is set to anything other than 0 its custom
+	if(rule_level_diff == 0) {
+		if(RuleI(PVP, Settings) == 1)
+		{
+			rule_level_diff = 4;
+		}
+		// Vallon/Tallon Zek
+		else if(RuleI(PVP, Settings) == 2)
+		{
+			rule_level_diff = 8;
+		}
+		// Sullon Zek
+		else if(RuleI(PVP, Settings) == 4)
+		{
+			LogDebug("Client::CanPvP World:PVPLevelDifference Passed, Sullon Zek Rules any level");
+			rule_level_diff = 100;
+		}
+	}
+
+	LogDebug("Client::CanPvP World:PVPLevelDifference Rule Level Diff: [{}], Level: [{}], Other Level: [{}]", rule_level_diff, GetLevel(), other_level);
+
+	// Compare Levels
+	if (abs(GetLevel() - other_level) > rule_level_diff)
+	{
+		LogDebug("Client::CanPvP World:PVPLevelDifference Failed, Failed Difference [{}]", abs(GetLevel() - other_level));
+		return false;
+	}
+
+	LogDebug("Client::CanPvP World:PVPLevelDifference Passed");
+	return true;
+}
+
+
+bool Client::PVPLevelDifference(Client *c)
+{
+	return PVPLevelDifference(c->GetLevel());
+}

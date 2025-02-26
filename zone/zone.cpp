@@ -2998,57 +2998,44 @@ void Zone::ApplyRandomLoc(uint32 zoneid, float& x, float& y)
 	return;
 }
 
-bool Zone::CanClientEngage(Client* initiator, Mob* target)
-{
-	if (!initiator || !target)
-	{
-		return false;
-	}
+//bool Zone::CanClientEngage(Client* initiator, Mob* target)
+//{
+//	if (!initiator || !target)
+//	{
+//		return false;
+//	}
 
-	if (initiator->Admin() >= RuleI(Quarm, MinStatusToZoneIntoAnyGuildZone))
-		return(true);
+	//if (initiator->Admin() >= RuleI(Quarm, MinStatusToZoneIntoAnyGuildZone))
+	//	return(true);
 
-	if (GetGuildID() == GUILD_NONE)
-		return true;
+//	if (GetGuildID() == GUILD_NONE)
+//		return true;
 
-	if (GetGuildID() == 1)
-		return true;
+//	if (GetGuildID() == 1)
+//		return true;
 
-	Raid* raid = initiator->GetRaid();
-	if (!raid)
-		return false;
+//	Raid* raid = initiator->GetRaid();
+//	if (!raid)
+//		return false;
 
-	return raid->GetEngageCachedResult();
-}
+//	return raid->GetEngageCachedResult();
+//}
 
 bool Zone::CanDoCombat(Mob* current, Mob* other, bool process)
 {
-	if (current && other && zone->GetGuildID() != GUILD_NONE)
-	{
-		if (current->IsClient() && current->CastToClient()->InstanceBootGraceTimerExpired())
-		{
-			bool bCanEngage = CanClientEngage(current->CastToClient(), other);
-			if (!bCanEngage)
-			{
-				current->CastToClient()->BootFromGuildInstance();
-				return false;
-			}
-		}
-		if (other->IsClient() && other->CastToClient()->InstanceBootGraceTimerExpired())
-		{
-			bool bCanEngage = CanClientEngage(other->CastToClient(), current);
-			if (!bCanEngage)
-			{
-				other->CastToClient()->BootFromGuildInstance();
-				return false;
-			}
-		}
-	}
 
 	if (CanDoCombat())
 	{
 		return true;
 	}
+
+	else if(GetZoneID() == Zones::NEXUS) { //No PvP in Nexus
+		if ((current && current->IsNPC() && !current->IsPlayerOwned()) ||
+		(other && other->IsNPC() && !other->IsPlayerOwned())) {
+		return false;
+		}
+	}
+
 	else if(GetZoneID() == Zones::BAZAAR) {// bazaar seems to be the only no combat zone with a PVP area.
 		// If we're doing a PVP check and one of us is a non-pet NPC disallow combat.
 		if ((current && current->IsNPC() && !current->IsPlayerOwned()) ||

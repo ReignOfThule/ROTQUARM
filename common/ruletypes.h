@@ -113,7 +113,7 @@ RULE_INT ( World, AccountSessionLimit, 1, "Max number of characters allowed on a
 RULE_INT ( World, ExemptAccountLimitStatus, 100, "Min status required to be exempt from multi-session per account limiting (-1 is disabled)")
 RULE_BOOL ( World, GMAccountIPList, false, "Check ip list against GM Accounts, AntiHack GM Accounts.")
 RULE_INT ( World, MinGMAntiHackStatus, 1, "Minimum GM status to check against AntiHack list")
-RULE_INT ( World, PVPSettings, 0, "Sets the PVP settings for the server, 1 = Rallos Zek RuleSet, 2 = Tallon/Vallon Zek Ruleset, 4 = Sullon Zek Ruleset, 6 = Discord Ruleset, anything above 6 is the Discord Ruleset without the no-drop restrictions removed. TODO: Edit IsAttackAllowed in Zone to accomodate for these rules.")
+RULE_INT (World, PVPSettings, 0, "Sets the PVP settings for the server, 1 = Rallos Zek RuleSet, 2 = Tallon/Vallon Zek Ruleset, 4 = Sullon Zek Ruleset, 6 = Discord Ruleset, anything above 6 is the Discord Ruleset without the no-drop restrictions removed. TODO: Edit IsAttackAllowed in Zone to accomodate for these rules.")
 RULE_INT (World, FVNoDropFlag, 0, "Sets the Firiona Vie settings on the client. If set to 2, the flag will be set for GMs only, allowing trading of no-drop items.")
 RULE_BOOL (World, IPLimitDisconnectAll, false, "")
 RULE_INT (World, TellQueueSize, 200, "")
@@ -205,6 +205,13 @@ RULE_BOOL(AlKabor, EnableEraItemRules, false, "AK behavior is false. If true, di
 RULE_BOOL(AlKabor, EnableLuclinHarmonyResistOverride, true, "AK behavior is true. If true, enable the late Luclin Harmony resist override.")
 RULE_BOOL(AlKabor, EnableLatePlanesHarmonyNerf, true, "AK behavior is true. If true, enable the late Planes of Power Harmony nerf")
 RULE_CATEGORY_END()
+
+RULE_CATEGORY(PVP)
+RULE_INT(PVP, MinLevel, 2, "PvP begins at level 2 by default.")
+RULE_INT(PVP, Settings, 0, "Sets the PVP settings for the server, 1 = Rallos Zek RuleSet, 2 = Tallon/Vallon Zek Ruleset, 4 = Sullon Zek Ruleset, 6 = Discord Ruleset, anything above 6 is the Discord Ruleset without the no-drop restrictions removed. TODO: Edit IsAttackAllowed in Zone to accomodate for these rules.")
+RULE_INT(PVP, LevelDifference, 4, "4 level range difference by default")
+RULE_CATEGORY_END()
+
 
 RULE_CATEGORY(Quarm)
 RULE_BOOL(Quarm, CursorAllowDuplicateItems, true, "Allows duplicate item IDs to stack on the cursor.  Set to false to emulate very early clients.")

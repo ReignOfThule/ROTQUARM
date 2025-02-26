@@ -1364,31 +1364,14 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, EQ::skills::Skill
 	bool dueling = IsDueling();
 	if (killerMob != nullptr)
 	{
-		if (killerMob->IsNPC()) 
-		{
-			parse->EventNPC(EVENT_SLAY, killerMob->CastToNPC(), this, "", 0);
-
-			if (killerMob && zone->GetGuildID() == 1)
-			{
-				std::string pvpKilledGuildName = GetGuildName();
-				entity_list.Message(0, 15, "[PVP] %s of <%s> has died to %s in combat!", GetCleanName(), pvpKilledGuildName.empty() ? " " : pvpKilledGuildName.c_str(), killerMob->GetCleanName());
-			}
-
-			killedby = Killed_NPC;
-
-			uint32 emoteid = killerMob->GetEmoteID();
-			if(emoteid != 0)
-				killerMob->CastToNPC()->DoNPCEmote(EQ::constants::EmoteEventTypes::KilledPC,emoteid,this);
-		}
-
-		else if (killerMob->IsClient() && zone->GetGuildID() == 1)
+		if (killerMob->IsClient())
 		{
 			if (killerMob != this)
 			{
 				killedby = Killed_PVP;
 				std::string pvpKilledGuildName = GetGuildName();
 				std::string pvpKillerGuildName = killerMob->CastToClient()->GetGuildName();
-				entity_list.Message(0, 15, "[PVP] %s of <%s> has been killed in combat by %s of <%s>!", GetCleanName(), pvpKilledGuildName.empty() ? " " : pvpKilledGuildName.c_str(), killerMob->GetCleanName(), pvpKillerGuildName.empty() ? " " : pvpKillerGuildName.c_str());
+				worldserver.SendEmoteMessage(0, 0, 15, "[PVP] %s of <%s> has been killed in combat by %s of <%s>!", GetCleanName(), pvpKilledGuildName.empty() ? " " : pvpKilledGuildName.c_str(), killerMob->GetCleanName(), pvpKillerGuildName.empty() ? " " : pvpKillerGuildName.c_str());
 			}
 			else
 			{
