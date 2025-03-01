@@ -31,6 +31,7 @@
 #include <math.h>
 #include <sstream>
 #include "map.h"
+#include "guild_mgr.h"
 
 extern EntityList entity_list;
 
@@ -300,6 +301,7 @@ Mob::Mob(const char* in_name,
 	SetPetID(0);
 	SetOwnerID(0);
 	typeofpet = petCharmed;		//default to charmed...
+	//npc_assist_cap = 0;
 	summonerid = 0;
 	summonedClientPet = false;
 	petpower = 0;
@@ -932,6 +934,11 @@ void Mob::CreateSpawnPacket(EQApplicationPacket* app, Mob* ForWho) {
 	memset(app->pBuffer, 0, app->size);
 	NewSpawn_Struct* ns = (NewSpawn_Struct*)app->pBuffer;
 	FillSpawnStruct(ns, ForWho);
+
+	if((ForWho && !ForWho->IsPet()) && (ForWho->CastToNPC()->GetNPCGuildID() > 0))
+	{
+		strcpy(ns->spawn.lastName, guild_mgr.GetGuildName(ForWho->CastToNPC()->GetNPCGuildID()));
+	}
 }
 
 void Mob::CreateSpawnPacket(EQApplicationPacket* app, NewSpawn_Struct* ns) {
@@ -1624,6 +1631,17 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 	safe_delete(outapp);
 	Log(Logs::Detail, Logs::Spells, "Illusion: Race = %i, Gender = %i, Texture = %i, HelmTexture = %i, HairColor = %i, BeardColor = %i, EyeColor1 = %i, EyeColor2 = %i, HairStyle = %i, Face = %i, Size = %f",
 		this->race, this->gender, this->texture, this->helmtexture, this->haircolor, this->beardcolor, this->eyecolor1, this->eyecolor2, this->hairstyle, this->luclinface, this->size);
+}
+
+uint16 Mob::GetFactionRace() {
+	uint16 current_race = GetRace();	
+	if (IsPlayerRace(current_race) || current_race == TREEFORM || 
+		current_race == MINOR_ILLUSION || current_race == WEREWOLF) {
+		return current_race;
+	}
+	else {
+		return (GetBaseRace());
+	}
 }
 
 uint8 Mob::GetDefaultGender(uint16 in_race, uint8 in_gender) {
@@ -5616,6 +5634,20 @@ void Mob::AddAllClientsToEngagementRecords()
 			}
 		}
 	}
+}
+
+FACTION_VALUE Mob::GetReverseFactionCon(Mob* iOther)
+{
+	if (IsNPC())
+		return CastToNPC()->GetReverseFactionCon(iOther);
+	return CastToClient()->GetReverseFactionCon(iOther);
+}
+
+FACTION_VALUE Mob::GetReverseFactionCon(Mob* iOther, bool ignore_feign_death)
+{
+	if (IsNPC())
+		return CastToNPC()->GetReverseFactionCon(iOther, ignore_feign_death);
+	return CastToClient()->GetReverseFactionCon(iOther, ignore_feign_death);
 }
 
 void Mob::DeleteBucket(std::string bucket_name) {

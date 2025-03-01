@@ -415,6 +415,19 @@ bool SharedDatabase::SetStartingItems(PlayerProfile_Struct* pp, EQ::InventoryPro
 	return true;
 }
 
+
+const NPCFactionList* SharedDatabase::GetNPCFactionEntry(uint32 id) {
+	if(!faction_hash) {
+		return nullptr;
+	}
+
+	if(faction_hash->exists(id)) {
+		return &(faction_hash->at(id));
+	}
+
+	return nullptr;
+}
+
 // Overloaded: Retrieve character inventory based on character id
 bool SharedDatabase::GetInventory(uint32 char_id, EQ::InventoryProfile* inv)
 {

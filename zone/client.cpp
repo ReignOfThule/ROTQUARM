@@ -3513,89 +3513,50 @@ void Client::Escape()
 // Based on http://www.eqtraders.com/articles/article_page.php?article=g190&menustr=070000000000
 float Client::CalcPriceMod(Mob* other, bool reverse)
 {
-	float priceMult = 0.8f;
-
-	if (other && other->IsNPC())
+	float chaformula = 0;
+	if (other)
 	{
-		int factionlvl = GetFactionLevel(CharacterID(), GetRace(), GetClass(), GetDeity(), other->CastToNPC()->GetPrimaryFaction(), other);
-		int32 cha = GetCHA();
-		if (factionlvl <= FACTION_AMIABLY)
-			cha += 11;		// amiable faction grants a defacto 11 charisma bonus
-
-		uint8 greed = other->CastToNPC()->GetGreedPercent();
-
-		// Sony's precise algorithm is unknown, but this produces output that is virtually identical
-		if (factionlvl <= FACTION_INDIFFERENTLY)
+		int factionlvl = GetFactionLevel(CharacterID(), other->CastToNPC()->GetNPCTypeID(), GetFactionRace(), GetClass(), GetDeity(), other->CastToNPC()->GetPrimaryFaction(), other);
+		if (factionlvl >= FACTION_APPREHENSIVELY) // Apprehensive or worse.
 		{
-			if (cha > 75)
+			if (GetCHA() > 103)
 			{
-				if (greed)
-				{
-					// this is derived from curve fitting to a lot of price data
-					priceMult = -0.2487768 + (1.599635 - -0.2487768) / (1 + pow((cha / 135.1495), 1.001983));
-					priceMult += (greed + 25u) / 100.0f;  // default vendor markup is 25%; anything above that is 'greedy'
-					priceMult = 1.0f / priceMult;
-				}
-				else
-				{
-					// non-greedy merchants use a linear scale
-					priceMult = 1.0f - ((115.0f - cha) * 0.004f);
-				}
+				chaformula = (GetCHA() - 103)*((-(RuleR(Merchant, ChaBonusMod))/100)*(RuleI(Merchant, PriceBonusPct))); // This will max out price bonus.
+				if (chaformula < -1*(RuleI(Merchant, PriceBonusPct)))
+					chaformula = -1*(RuleI(Merchant, PriceBonusPct));
 			}
-			else if (cha > 60)
+			else if (GetCHA() < 103)
 			{
-				priceMult = 1.0f / (1.25f + (greed / 100.0f));
-			}
-			else
-			{
-				priceMult = 1.0f / ((1.0f - (cha - 120.0f) / 220.0f) + (greed / 100.0f));
+				chaformula = (103 - GetCHA())*(((RuleR(Merchant, ChaPenaltyMod))/100)*(RuleI(Merchant, PricePenaltyPct))); // This will bottom out price penalty.
+				if (chaformula > 1*(RuleI(Merchant, PricePenaltyPct)))
+					chaformula = 1*(RuleI(Merchant, PricePenaltyPct));
 			}
 		}
-		else // apprehensive
+		if (factionlvl <= FACTION_INDIFFERENTLY) // Indifferent or better.
 		{
-			if (cha > 75)
+			if (GetCHA() > 75)
 			{
-				if (greed)
-				{
-					// this is derived from curve fitting to a lot of price data
-					priceMult = -0.25f + (1.823662 - -0.25f) / (1 + (cha / 135.0f));
-					priceMult += (greed + 25u) / 100.0f;  // default vendor markup is 25%; anything above that is 'greedy'
-					priceMult = 1.0f / priceMult;
-				}
-				else
-				{
-					priceMult = (100.0f - (145.0f - cha) / 2.8f) / 100.0f;
-				}
+				chaformula = (GetCHA() - 75)*((-(RuleR(Merchant, ChaBonusMod))/100)*(RuleI(Merchant, PriceBonusPct))); // This will max out price bonus.
+				if (chaformula < -1*(RuleI(Merchant, PriceBonusPct)))
+					chaformula = -1*(RuleI(Merchant, PriceBonusPct));
 			}
-			else if (cha > 60)
+			else if (GetCHA() < 75)
 			{
-				priceMult = 1.0f / (1.4f + greed / 100.0f);
-			}
-			else
-			{
-				priceMult = 1.0f / ((1.0f + (143.574 - cha) / 196.434) + (greed / 100.0f));
+				chaformula = (75 - GetCHA())*(((RuleR(Merchant, ChaPenaltyMod))/100)*(RuleI(Merchant, PricePenaltyPct))); // Faction modifier keeps up from reaching bottom price penalty.
+				if (chaformula > 1*(RuleI(Merchant, PricePenaltyPct)))
+					chaformula = 1*(RuleI(Merchant, PricePenaltyPct));
 			}
 		}
-
-		float maxResult = 1.0f / 1.05;		// price reduction caps at this amount
-		if (priceMult > maxResult)
-			priceMult = maxResult;
-
-		if (!reverse)
-			priceMult = 1.0f / priceMult;
 	}
 
-	std::string type = "sells";
-	std::string type2 = "to";
 	if (reverse)
-	{
-		type = "buys";
-		type2 = "from";
-	}
-
-	Log(Logs::General, Logs::Trading, "%s %s items at %0.2f the cost %s %s", other->GetName(), type.c_str(), priceMult, type2.c_str(), GetName());
-	return priceMult;
+		chaformula *= -1; //For selling
+	//Now we have, for example, 10
+	chaformula /= 100; //Convert to 0.10
+	chaformula += 1; //Convert to 1.10;
+	return chaformula; //Returns 1.10, expensive stuff!
 }
+
 
 void Client::SacrificeConfirm(Mob *caster) {
 
@@ -4941,6 +4902,19 @@ void Client::GarbleMessage(char *message, uint8 variance)
 
 // returns what Other thinks of this
 FACTION_VALUE Client::GetReverseFactionCon(Mob* iOther) {
+	if(GuildID() > 0 && (GuildID() == iOther->CastToNPC()->GetNPCGuildID()))
+	{
+		return FACTION_ALLY;
+	}
+	//else
+	//{
+	//	LogAIYellForHelpDetail(
+	//		"PC GUILD [{}] ID [{}] iOther GUILD ID",
+	//		GuildID(),
+	//		iOther->CastToNPC()->GetNPCGuildID()
+	//	);
+	//}
+
 	if (GetOwnerID()) {
 		return GetOwnerOrSelf()->GetReverseFactionCon(iOther);
 	}
@@ -4953,7 +4927,39 @@ FACTION_VALUE Client::GetReverseFactionCon(Mob* iOther) {
 	if (iOther->GetPrimaryFaction() == 0)
 		return FACTION_INDIFFERENTLY;
 
-	return GetFactionLevel(CharacterID(), GetRace(), GetClass(), GetDeity(), iOther->GetPrimaryFaction(), iOther);
+	return GetFactionLevel(CharacterID(), 0, GetFactionRace(), GetClass(), GetDeity(), iOther->GetPrimaryFaction(), iOther, GuildID());
+}
+
+// returns what Other thinks of this, ignore FD status
+FACTION_VALUE Client::GetReverseFactionCon(Mob* iOther, bool ignore_feign_death) {
+	if(GuildID() > 0 && (GuildID() == iOther->CastToNPC()->GetNPCGuildID()))
+	{
+		return FACTION_ALLY;
+	}
+	else if (GuildID() > 0 && iOther->CastToNPC()->GetNonGuildHostile()) //check if city is KoS to non-guildies
+	{
+		if (iOther->CastToNPC()->IsGuard()) {
+			return FACTION_SCOWLS;
+		} else {
+			return FACTION_DUBIOUSLY;
+		}
+	}
+
+	if (GetOwnerID()) {
+		return GetOwnerOrSelf()->GetReverseFactionCon(iOther);
+	}
+
+	iOther = iOther->GetOwnerOrSelf();
+
+	if (iOther->GetPrimaryFaction() < 0)
+		return GetSpecialFactionCon(iOther);
+
+	if (iOther->GetPrimaryFaction() == 0)
+		return FACTION_INDIFFERENTLY;
+
+	Log(Logs::Detail, Logs::Doors, "Client::GetReverseFactionCon");
+
+	return GetFactionLevel(CharacterID(), 0, GetFactionRace(), GetClass(), GetDeity(), iOther->GetPrimaryFaction(), iOther, ignore_feign_death);
 }
 
 //o--------------------------------------------------------------
@@ -4962,18 +4968,33 @@ FACTION_VALUE Client::GetReverseFactionCon(Mob* iOther) {
 //| Notes: Gets the characters faction standing with the specified NPC.
 //|			Will return Indifferent on failure.
 //o--------------------------------------------------------------
-FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc, bool lua)
+FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc, uint32 p_guild)
 {
+	Log(Logs::General, Logs::Debug, "GetFactionLevel Called");
+
+	if (GuildID() > 0 && tnpc && (tnpc->CastToNPC()->GetNPCGuildID() == GuildID()))
+	{
+		return FACTION_ALLY;
+	}
+	else if (GuildID() > 0 && tnpc->CastToNPC()->GetNonGuildHostile()) //check if city is KoS to non-guildies
+	{
+		if (tnpc->CastToNPC()->IsGuard()) {
+			return FACTION_SCOWLS;
+		} else {
+			return FACTION_DUBIOUSLY;
+		}
+	}
+
 	if (pFaction < 0)
 		return GetSpecialFactionCon(tnpc);
 	FACTION_VALUE fac = FACTION_INDIFFERENTLY;
 	int32 tmpFactionValue;
 	FactionMods fmods;
-
+	Log(Logs::General, Logs::Debug, "CharID: %i NPC ID: %i P_RACE: %i P_CLASS: %i P_DEITY: %i P_FACTION: %i", char_id, npc_id, p_race, p_class, p_deity, pFaction);
 	// few optimizations
-	if (IsFeigned() && tnpc && !tnpc->GetSpecialAbility(SpecialAbility::FeignDeathImmunity))
+	if (IsFeigned())
 		return FACTION_INDIFFERENTLY;
-	if (!zone->CanDoCombat())
+	if(!zone->CanDoCombat())
 		return FACTION_INDIFFERENTLY;
 	if (invisible_undead && tnpc && !tnpc->SeeInvisibleUndead())
 		return FACTION_INDIFFERENTLY;
@@ -4981,7 +5002,7 @@ FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 p_race, uint32 p_cl
 		return FACTION_INDIFFERENTLY;
 	if (tnpc && tnpc->GetOwnerID() != 0) // pets con amiably to owner and indiff to rest
 	{
-		if (tnpc->GetOwner() && tnpc->GetOwner()->IsClient() && char_id == tnpc->GetOwner()->CastToClient()->CharacterID())
+		if (char_id == tnpc->GetOwner()->CastToClient()->CharacterID())
 			return FACTION_AMIABLY;
 		else
 			return FACTION_INDIFFERENTLY;
@@ -4992,6 +5013,7 @@ FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 p_race, uint32 p_cl
 	{
 		//Get the faction data from the database
 		if(database.GetFactionData(&fmods, p_class, p_race, p_deity, pFaction, GetTexture(), GetGender(), GetBaseRace()))
+
 		{
 			//Get the players current faction with pFaction
 			tmpFactionValue = GetCharacterFactionLevel(pFaction);
@@ -4999,7 +5021,7 @@ FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 p_race, uint32 p_cl
 			tmpFactionValue += GetFactionBonus(pFaction);
 			tmpFactionValue += GetItemFactionBonus(pFaction);
 			//Return the faction to the client
-			fac = CalculateFaction(&fmods, tmpFactionValue, lua);
+			fac = CalculateFaction(&fmods, tmpFactionValue);
 		}
 	}
 	else
@@ -5011,61 +5033,50 @@ FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 p_race, uint32 p_cl
 	if (tnpc && tnpc->IsNPC() && tnpc->CastToNPC()->MerchantType && (fac == FACTION_THREATENINGLY || fac == FACTION_SCOWLS))
 		fac = FACTION_DUBIOUSLY;
 
-	// We're engaged with the NPC and their base is dubious or higher, return threatenly
 	if (tnpc != 0 && fac != FACTION_SCOWLS && tnpc->CastToNPC()->CheckAggro(this))
 		fac = FACTION_THREATENINGLY;
 
 	return fac;
 }
 
-int16 Client::GetFactionValue(Mob* tnpc)
+//o--------------------------------------------------------------
+//| Name: GetFactionLevel; Dec. 16, 2001
+//o--------------------------------------------------------------
+//| Notes: Gets the characters faction standing with the specified NPC.
+//|			Will return Indifferent on failure.
+//o--------------------------------------------------------------
+// Ignores FD status
+FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc, bool ignore_feign_death)
 {
-	int16 tmpFactionValue;
+
+	Log(Logs::General, Logs::Debug, "GetFactionLevel Called");
+	if (GuildID() > 0 && tnpc && (tnpc->CastToNPC()->GetNPCGuildID() == GuildID()))
+	{
+		return FACTION_ALLY;
+	}
+
+	FACTION_VALUE fac = FACTION_INDIFFERENTLY;
+	int32 tmpFactionValue;
 	FactionMods fmods;
 
-	if (IsFeigned() || IsInvisible(tnpc)) {
-		return 0;
-	}
+	// few optimizations
+	if (!ignore_feign_death && IsFeigned())
+		return FACTION_INDIFFERENTLY;
+	if (invisible_undead && tnpc && !tnpc->SeeInvisibleUndead())
+		return FACTION_INDIFFERENTLY;
+	if (IsInvisible(tnpc))
+		return FACTION_INDIFFERENTLY;
 
-	// pets con amiably to owner and indiff to rest
-	if (tnpc && tnpc->GetOwnerID() != 0) {
-		if (tnpc->GetOwner() && tnpc->GetOwner()->IsClient() && CharacterID() == tnpc->GetOwner()->CastToClient()->CharacterID()) {
-			return 100;
-		}
-		else {
-			return 0;
-		}
+	if(database.GetFactionData(&fmods, p_class, p_race, p_deity, pFaction, GetTexture(), GetGender(), GetBaseRace())) {
+		tmpFactionValue = GetCharacterFactionLevel(pFaction);
+		//Tack on any bonuses from Alliance type spell effects
+		tmpFactionValue += GetFactionBonus(pFaction);
+		tmpFactionValue += GetItemFactionBonus(pFaction);
+		//Return the faction to the client
+		fac = CalculateFaction(&fmods, tmpFactionValue);
+		Log(Logs::General, Logs::Debug, "CharID: %i NPC ID: %i P_RACE: %i P_CLASS: %i P_DEITY: %i P_FACTION: %i IGNORE_FEIGN: %i TMP: %i", char_id, npc_id, p_race, p_class, p_deity, pFaction, ignore_feign_death, tmpFactionValue);
 	}
-
-	//First get the NPC's Primary faction
-	int32 primary_faction = tnpc->GetPrimaryFaction();
-	if (primary_faction > 0) {
-		//Get the faction data from the database
-		if (database.GetFactionData(&fmods, GetClass(), GetRace(), GetDeity(), primary_faction, GetTexture(), GetGender(), GetBaseRace())) {
-			//Get the players current faction with pFaction
-			tmpFactionValue = GetCharacterFactionLevel(primary_faction);
-			//Tack on any bonuses from Alliance type spell effects
-			tmpFactionValue += GetFactionBonus(primary_faction);
-			tmpFactionValue += GetItemFactionBonus(primary_faction);
-			//Add base mods, GetFactionData() above also accounts for illusions.
-			tmpFactionValue += fmods.base + fmods.class_mod + fmods.race_mod + fmods.deity_mod;
-		}
-	}
-	else {
-		return 0;
-	}
-
-	// merchant fix
-	if (tnpc && tnpc->IsNPC() && tnpc->CastToNPC()->MerchantType && tmpFactionValue <= -501) {
-		return -500;
-	}
-
-	// We're engaged with the NPC and their base is dubious or higher, return threatenly
-	if (tnpc != 0 && tmpFactionValue >= -500 && tnpc->CastToNPC()->CheckAggro(this)) {
-		return -501;
-	}
-
-	return tmpFactionValue;
+	return fac;
 }
 
 //Sets the characters faction standing with the specified NPC.

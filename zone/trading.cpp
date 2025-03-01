@@ -678,7 +678,8 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry)
 			if (npc->GetSpecialAbility(SpecialAbility::BadFactionBlockHandin) && item && quest_npc == true && !GetGM())
 			{
 				int primaryfaction = npc->GetPrimaryFaction();
-				int factionlvl = GetFactionLevel(CharacterID(), GetRace(), GetClass(), GetDeity(), primaryfaction, tradingWith);
+				
+				int factionlvl = GetFactionLevel(CharacterID(), tradingWith->CastToNPC()->GetNPCTypeID(), GetRace(), GetClass(), GetDeity(), primaryfaction, tradingWith);
 
 				if (factionlvl >= FACTION_THREATENINGLY)
 				{

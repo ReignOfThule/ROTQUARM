@@ -735,8 +735,10 @@ public:
 	void SetZoning(bool in) { zoning = in; }
 
 	FACTION_VALUE GetReverseFactionCon(Mob* iOther);
-	FACTION_VALUE GetFactionLevel(uint32 char_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc, bool lua = false);
-	int16 GetFactionValue(Mob* tnpc);
+	FACTION_VALUE GetReverseFactionCon(Mob* iOther, bool ignore_feign_death);
+	FACTION_VALUE GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc, uint32 p_guild = 0);
+	FACTION_VALUE GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc, bool ignore_feign_death);
+	
 	int32 GetCharacterFactionLevel(int32 faction_id);
 	int32 GetModCharacterFactionLevel(int32 faction_id, bool skip_illusions = false);
 	void MerchantRejectMessage(Mob *merchant, int primaryfaction);

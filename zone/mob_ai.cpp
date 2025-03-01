@@ -440,82 +440,6 @@ bool NPC::AIDoSpellCast(uint8 i, Mob* tar, int32 mana_cost, uint32* oDontDoAgain
 	return CastSpell(AIspells[i].spellid, tar->GetID(), EQ::spells::CastingSlot::Gem2, spells[AIspells[i].spellid].cast_time, mana_cost, oDontDoAgainBefore, -1, -1, 0, 0, &(AIspells[i].resist_adjust));
 }
 
-bool EntityList::AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float iRange, uint16 iSpellTypes) {
-	if((iSpellTypes&SpellTypes_Detrimental) != 0) {
-		//according to live, you can buff and heal through walls...
-		//now with PCs, this only applies if you can TARGET the target, but
-		// according to Rogean, Live NPCs will just cast through walls/floors, no problem..
-		//
-		// This check was put in to address an idle-mob CPU issue
-		Log(Logs::General, Logs::Error, "Error: detrimental spells requested from AICheckCloseBeneficialSpells!!");
-		return(false);
-	}
-
-	if(!caster)
-		return false;
-
-	if(caster->AI_HasSpells() == false)
-		return false;
-
-	if(caster->GetSpecialAbility(SpecialAbility::NoBuffHealFriends))
-		return false;
-
-	if (iChance < 100) {
-		uint8 tmp = zone->random.Int(0, 99);
-		if (tmp >= iChance)
-			return false;
-	}
-	if (caster->GetPrimaryFaction() == 0 )
-		return(false); // well, if we dont have a faction set, we're gonna be indiff to everybody
-
-	float iRange2 = iRange*iRange;
-
-	float t1, t2, t3;
-
-
-	//Only iterate through NPCs
-	for (auto it = npc_list.begin(); it != npc_list.end(); ++it)
-	{
-		NPC* mob = it->second;
-
-		if (mob->IsUnTargetable())
-			continue;
-
-		//Since >90% of mobs will always be out of range, try to
-		//catch them with simple bounding box checks first. These
-		//checks are about 6X faster than DistNoRoot on my athlon 1Ghz
-		t1 = mob->GetX() - caster->GetX();
-		t2 = mob->GetY() - caster->GetY();
-		t3 = mob->GetZ() - caster->GetZ();
-		//cheap ABS()
-		if(t1 < 0)
-			t1 = 0 - t1;
-		if(t2 < 0)
-			t2 = 0 - t2;
-		if(t3 < 0)
-			t3 = 0 - t3;
-		if (t1 > iRange
-			|| t2 > iRange
-			|| t3 > iRange * 0.2f
-			|| DistanceSquared(mob->GetPosition(), caster->GetPosition()) > iRange2
-			|| mob->GetReverseFactionCon(caster) >= FACTION_KINDLY
-		) {
-			continue;
-		}
-
-		//since we assume these are beneficial spells, which do not
-		//require LOS, we just go for it.
-		// we have a winner!
-		if((iSpellTypes & SpellType_Buff) && !RuleB(NPC, BuffFriends)){
-			if (mob != caster)
-				iSpellTypes = SpellType_Heal;
-		}
-
-		if (caster->AICastSpell(mob, 100, iSpellTypes))
-			return true;
-	}
-	return false;
-}
 
 void Mob::AI_Init() {
 	pAIControlled = false;
@@ -1640,7 +1564,7 @@ void Mob::AI_Process() {
 				if(victim && !victim->HasDied() && IsNPC())
 					CastToNPC()->DoClassAttacks(victim);
 			}
-			AI_EngagedCastCheck();
+			//AI_EngagedCastCheck();
 		}	//end is within combat range
 		else
 		{
@@ -1697,12 +1621,12 @@ void Mob::AI_Process() {
 					}
 
 					// Now pursue
-					if (AI_EngagedCastCheck()) {
-						if (IsCasting() && GetClass() != Class::Bard) {
-							FaceTarget(GetTarget());
-						}
-					}
-					else if (ai_think && GetTarget())
+					//if (AI_EngagedCastCheck()) {
+					//	if (IsCasting() && GetClass() != Class::Bard) {
+					//		FaceTarget(GetTarget());
+					//	}
+					//}
+					if (ai_think && GetTarget())
 					{
 						if (AIstackedmobs_timer->Check() && zone->random.Roll(33) && entity_list.StackedMobsCount(this) > 4) {
 							if (GetHPRatio() < 95.0f && zone->random.Roll(5) && (GetZoneID() == Zones::POSTORMS || GetZoneID() == Zones::POVALOR || GetZoneID() == Zones::HOHONORA || GetZoneID() == Zones::POFIRE || GetZoneID() == Zones::POTACTICS)) {
@@ -1813,7 +1737,7 @@ void Mob::AI_Process() {
 					}
 				}
 			} // summon and pursuit
-			if (ai_think && IsBlind() && !AI_EngagedCastCheck() && !IsRooted() && curfp)
+			if (ai_think && IsBlind() && !IsRooted() && curfp)
 			{
 				// target is not in melee range and NPC is blind
 				DoFearMovement();
@@ -1830,13 +1754,8 @@ void Mob::AI_Process() {
 			if (cur_hp < max_hp)
 				Heal();
 		}
-		if (AI_IdleCastCheck())
-		{
-			if (IsCasting() && GetClass() != Class::Bard) {
-				StopNavigation();
-			}
-		}
-		else if (AI_scan_area_timer != nullptr && AI_scan_area_timer->Check())
+		
+		if (AI_scan_area_timer != nullptr && AI_scan_area_timer->Check())
 		{
 			/*
 			* This is where NPCs look around to see if they want to attack other NPCs.
@@ -2638,60 +2557,6 @@ void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot)
 		}
 		casting_spell_AIindex = AIspells.size();
 	}
-}
-
-
-bool NPC::AI_EngagedCastCheck() {
-	if (AIautocastspell_timer->Check(false)) {
-		AIautocastspell_timer->Disable();	//prevent the timer from going off AGAIN while we are casting.
-
-		Log(Logs::Detail, Logs::AI, "Engaged autocast check triggered. Trying to cast healing spells then maybe offensive spells.");
-
-		// prioritize raid boss spells (spells with priority == 0) first, with no detrimental roll
-		if (hasZeroPrioritySpells)
-		{
-			if (AICastSpell(GetTarget(), 100, SpellType_Nuke | SpellType_Lifetap | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff | SpellType_Charm | SpellType_Root | SpellType_Snare, true))
-				return(true);
-		}
-
-		// try casting a heal or gate
-		if (!AICastSpell(this, AISpellVar.engaged_beneficial_self_chance, SpellType_Heal | SpellType_Escape | SpellType_InCombatBuff)) {
-			// try casting a heal on nearby
-			if (!entity_list.AICheckCloseBeneficialSpells(this, AISpellVar.engaged_beneficial_other_chance, MobAISpellRange, SpellType_Heal)) {
-				//nobody to heal, try some detrimental spells.
-				if(!AICastSpell(GetTarget(), AISpellVar.engaged_detrimental_chance, SpellType_Nuke | SpellType_Lifetap | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff | SpellType_Charm | SpellType_Root | SpellType_Snare)) {
-					//no spell to cast, try again soon.
-					AIautocastspell_timer->Start(RandomTimer(AISpellVar.engaged_no_sp_recast_min, AISpellVar.engaged_no_sp_recast_max), false);
-				}
-			}
-		}
-		return(true);
-	}
-
-	return(false);
-}
-
-bool NPC::AI_IdleCastCheck() {
-	if (AIautocastspell_timer->Check(false)) {
-#if MobAI_DEBUG_Spells >= 25
-		std::cout << "Non-Engaged autocast check triggered: " << this->GetName() << std::endl;
-#endif
-		AIautocastspell_timer->Disable();	//prevent the timer from going off AGAIN while we are casting.
-		if (IsUnTargetable())
-		{
-			AIautocastspell_timer->Start(AISpellVar.idle_no_sp_recast_max, false);
-			return false;
-		}
-		if (!AICastSpell(this, AISpellVar.idle_beneficial_chance, SpellType_Heal | SpellType_Buff | SpellType_Pet)) {
-			if(!entity_list.AICheckCloseBeneficialSpells(this, 40, MobAISpellRange, SpellType_Heal | SpellType_Buff)) {
-				//if we didnt cast any spells, our autocast timer just resets to the
-				//last duration it was set to... try to put up a more reasonable timer...
-				AIautocastspell_timer->Start(RandomTimer(AISpellVar.idle_no_sp_recast_min, AISpellVar.idle_no_sp_recast_max), false);
-			}	//else, spell casting finishing will reset the timer.
-		}	//else, spell casting finishing will reset the timer.
-		return(true);
-	}
-	return(false);
 }
 
 void Mob::CheckEnrage()

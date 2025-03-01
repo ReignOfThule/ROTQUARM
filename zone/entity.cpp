@@ -1533,6 +1533,7 @@ void EntityList::QueueClientsByTarget(Mob *sender, const EQApplicationPacket *ap
 	}
 }
 
+
 void EntityList::QueueCloseClients(Mob *sender, const EQApplicationPacket *app,
 		bool ignore_sender, float dist, Mob *SkipThisMob, bool ackreq, eqFilterType filter)
 {

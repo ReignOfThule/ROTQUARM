@@ -753,6 +753,11 @@ bool NPC::DatabaseCastAccepted(int spell_id) {
 	return false;
 }
 
+void NPC::SetGuild(int32 guild)
+{
+	npc_guild_id = guild;
+}
+
 void NPC::SpawnGridNodeNPC(const glm::vec4& position, int32 grid_id, int32 grid_number, int32 zoffset)
 {
 	auto npc_type = new NPCType;
@@ -2420,12 +2425,23 @@ bool NPC::CanTalk()
 	}
 }
 
-//this is called with 'this' as the mob being looked at, and
-//iOther the mob who is doing the looking. It should figure out
-//what iOther thinks about 'this'
-FACTION_VALUE NPC::GetReverseFactionCon(Mob* iOther) {
+FACTION_VALUE NPC::GetReverseFactionCon(Mob* iOther, uint32 other_guild) {
 	iOther = iOther->GetOwnerOrSelf();
 	int primaryFaction= iOther->GetPrimaryFaction();
+
+	if(other_guild > 0 && (other_guild == iOther->CastToNPC()->GetNPCGuildID()))
+	{
+		return FACTION_ALLY;
+	}
+	else if (other_guild > 0 && iOther->CastToNPC()->GetNonGuildHostile())
+	{
+		if (iOther->CastToNPC()->IsGuard()) {
+			return FACTION_SCOWLS;
+		}
+		else {
+			return FACTION_DUBIOUSLY;
+		}
+	}
 
 	//I am pretty sure that this special faction call is backwards
 	//and should be iOther->GetSpecialFactionCon(this)
@@ -2439,6 +2455,53 @@ FACTION_VALUE NPC::GetReverseFactionCon(Mob* iOther) {
 	Mob *own = GetOwner();
 	if (own != nullptr)
 		return own->GetReverseFactionCon(iOther);
+
+	//make sure iOther is an npc
+	//also, if we dont have a faction, then they arnt gunna think anything of us either
+	if(!iOther->IsNPC() || GetPrimaryFaction() == 0)
+		return(FACTION_INDIFFERENTLY);
+
+	//if we get here, iOther is an NPC too
+
+	//otherwise, employ the npc faction stuff
+	//so we need to look at iOther's faction table to see
+	//what iOther thinks about our primary faction
+	return(iOther->CastToNPC()->CheckNPCFactionAlly(GetPrimaryFaction()));
+}
+
+//this is called with 'this' as the mob being looked at, and
+//iOther the mob who is doing the looking. It should figure out
+//what iOther thinks about 'this'
+FACTION_VALUE NPC::GetReverseFactionCon(Mob* iOther, bool ignore_feign_death, uint32 other_guild) {
+	iOther = iOther->GetOwnerOrSelf();
+	int primaryFaction= iOther->GetPrimaryFaction();
+
+	if(other_guild > 0 && (other_guild == iOther->CastToNPC()->GetNPCGuildID()))
+	{
+		return FACTION_ALLY;
+	}
+	else if (other_guild > 0 && iOther->CastToNPC()->GetNonGuildHostile())
+	{
+		if (iOther->CastToNPC()->IsGuard()) {
+			return FACTION_SCOWLS;
+		}
+		else {
+			return FACTION_DUBIOUSLY;
+		}
+	}
+
+	//I am pretty sure that this special faction call is backwards
+	//and should be iOther->GetSpecialFactionCon(this)
+	if (primaryFaction < 0)
+		return GetSpecialFactionCon(iOther);
+
+	if (primaryFaction == 0)
+		return FACTION_INDIFFERENTLY;
+
+	//if we are a pet, use our owner's faction stuff
+	Mob *own = GetOwner();
+	if (own != nullptr)
+		return own->GetReverseFactionCon(iOther, RuleB(Pets, PetFactionIgnoresOwnerFeignDeathStatus));
 
 	//make sure iOther is an npc
 	//also, if we dont have a faction, then they arnt gunna think anything of us either
@@ -2506,6 +2569,130 @@ void NPC::DoQuestPause(Mob *other)
 	}
 }
 
+void NPC::AIYellForHelp(Mob *sender, Mob *attacker)
+{
+	
+
+	if (!sender || !attacker) {
+		return;
+	}
+
+	/**
+	 * If we dont have a faction set, no guild set, we're gonna be indiff to everybody
+	 */
+	if (sender->GetPrimaryFaction() == 0 && sender->CastToNPC()->GetNPCGuildID() == 0) {
+		//LogAIYellForHelp("No Primary Faction: [{}] and No Guild: [{}]", sender->GetPrimaryFaction(), sender->CastToNPC()->GetNPCGuildID());
+		return;
+	}
+
+	if (sender->HasAssistAggro())
+		return;
+
+
+	for (auto &close_mob : entity_list.GetMobList()) {
+		Mob   *mob     = close_mob.second;
+		float distance = DistanceSquared(m_Position, mob->GetPosition());
+
+		if (mob->IsClient()) {
+			continue;
+		}
+
+		float assist_range = (mob->GetAssistRange() * mob->GetAssistRange());
+
+		if (mob->CastToNPC()->GetNPCGuildID() != 0) { //Guards default to 70 aggro range
+			assist_range = (70 * 70); 
+		}
+
+		if (distance > assist_range) {
+			continue;
+		}
+
+
+		if (mob->CheckAggro(attacker)) {
+			continue;
+		}
+
+
+		if (
+			mob != sender
+			&& mob != attacker
+			&& (mob->GetPrimaryFaction() != 0 || mob->CastToNPC()->GetNPCGuildID() != 0)
+			//&& !mob->IsEngaged() //Why was this line even here? This means tagging a mob doesnt provide social aggro on mobs nearby if its already aggro'd... -Gangtsa
+			&& ((!mob->IsPet()) || (mob->IsPet() && mob->GetOwner() && !mob->GetOwner()->IsClient()))
+			) 
+		{
+
+			if (mob->GetLevel() >= 65 || attacker->GetLevelCon(mob->GetLevel()) != CON_GREEN) {
+				bool use_primary_faction = false;
+				bool use_guild_faction = false;
+				if (mob->GetPrimaryFaction() == sender->CastToNPC()->GetPrimaryFaction()) {
+					const NPCFactionList *cf = database.GetNPCFactionEntry(mob->CastToNPC()->GetNPCFactionID());
+					if (cf) {
+						if (cf->assistprimaryfaction != 0) {
+							use_primary_faction = true;
+						}
+					}
+				}
+
+				if (mob->CastToNPC()->GetNPCGuildID() == sender->CastToNPC()->GetNPCGuildID()) { //if a guild guard then assist
+					if (mob->CastToNPC()->IsGuard()) {
+						use_guild_faction = true;
+					}
+				}
+
+				if (use_primary_faction || sender->GetReverseFactionCon(mob) <= FACTION_AMIABLY || use_guild_faction) {
+					//attacking someone on same faction, same guild, or a friend
+					//Father Nitwit: make sure we can see them.
+					if (mob->CheckLosFN(sender)) {
+						mob->AddToHateList(attacker, 25, 0, false);
+
+					}
+				}
+			}
+		}
+	}
+
+}
+
+
+bool NPC::IsGuard()
+{
+	int npcclass = GetClass();
+	if (npcclass >= 20 && npcclass <= 35) { //GMs or Merchants cannot be guards
+		return false;
+	}
+	if (npcclass == 41) {
+		return false;
+	}
+	
+	switch (GetRace()) {
+
+	case QEYNOS_CITIZEN:
+		if (GetTexture() == 1) {
+			return true;
+		}
+	case IKSAR:
+		if (GetTexture() == 1) {
+			return true;
+		}
+	case FELGUARD:
+		return true;
+	case ERUDITE_CITIZEN:
+		if (GetTexture() == 0) {
+			return true;
+		}
+	case OGGOK_CITIZEN:
+		if (GetTexture() == 0) {
+			return true;
+		}
+	default:
+		return false;
+		break;
+	
+	return false;
+}
+}
+
 void NPC::DepopSwarmPets()
 {
 	if (GetSwarmInfo()) {
@@ -2532,6 +2719,8 @@ void NPC::DepopSwarmPets()
 		}
 	}
 }
+
+
 
 int32 NPC::GetHPRegen() 
 {

@@ -60,6 +60,7 @@ namespace Gender {
 #define HIGHPASS_CITIZEN	67
 #define WISP				69
 #define ZOMBIE				70
+#define QEYNOS_CITIZEN		71
 #define	SHIP				72
 #define LAUNCH				73
 #define FROGLOK				74

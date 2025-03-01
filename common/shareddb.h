@@ -17,6 +17,7 @@
 #include <memory>
 
 
+
 struct NPCFactionList;
 struct Faction;
 namespace EQ {
@@ -85,6 +86,10 @@ public:
 		/*
 		    Shared Memory crap
 		*/
+	
+		//faction
+		const NPCFactionList *GetNPCFactionEntry(uint32 id);
+
 
 		//items
 		void GetItemsCount(int32 &item_count, uint32 &max_id);

@@ -204,6 +204,11 @@ void Lua_NPC::SetTaunting(bool t) {
 	self->SetTaunting(t);
 }
 
+void Lua_NPC::SetGuild(int guild_id) {
+	Lua_Safe_Call_Void();
+	self->SetGuild(guild_id);
+}
+
 void Lua_NPC::PickPocket(Lua_Client thief) {
 	Lua_Safe_Call_Void();
 	self->PickPocket(thief);

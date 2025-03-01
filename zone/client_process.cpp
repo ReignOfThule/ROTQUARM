@@ -1709,7 +1709,7 @@ void Client::OPGMTraining(const EQApplicationPacket *app)
 	}
 
 	int primaryfaction = pTrainer->CastToNPC()->GetPrimaryFaction();
-	int factionlvl = GetFactionLevel(CharacterID(), GetRace(), GetClass(), GetDeity(), primaryfaction, pTrainer);
+	int factionlvl = GetFactionLevel(CharacterID(), pTrainer->CastToNPC()->GetNPCTypeID(), GetRace(), GetClass(), GetDeity(), primaryfaction, pTrainer);
 	if (factionlvl >= FACTION_APPREHENSIVELY)
 	{
 		gmtrain->success = 0;
@@ -1762,7 +1762,7 @@ void Client::OPGMEndTraining(const EQApplicationPacket *app)
 		return;
 
 	int primaryfaction = pTrainer->CastToNPC()->GetPrimaryFaction();
-	int factionlvl = GetFactionLevel(CharacterID(), GetRace(), GetClass(), GetDeity(), primaryfaction, pTrainer);
+	int factionlvl = GetFactionLevel(CharacterID(), pTrainer->CastToNPC()->GetNPCTypeID(), GetRace(), GetClass(), GetDeity(), primaryfaction, pTrainer);
 	if (factionlvl >= FACTION_APPREHENSIVELY)
 		return;
 

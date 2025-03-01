@@ -346,6 +346,7 @@ public:
 	virtual void SetMaxHP() { cur_hp = max_hp; }
 	virtual inline uint16 GetBaseRace() const { return base_race; }
 	virtual inline uint8 GetBaseGender() const { return base_gender; }
+	virtual uint16 GetFactionRace();
 	virtual inline uint16 GetDeity() const { return deity; }
 	virtual uint32 GetDeityBit() { return Deity::GetBitmask(deity); }
 	inline uint16 GetRace() const { return race; }
@@ -807,6 +808,7 @@ public:
 	inline const bool IsAIControlled() const { return pAIControlled; }
 	inline const float GetAggroRange() const { return (spellbonuses.AggroRange == -1) ? pAggroRange : spellbonuses.AggroRange; }
 	inline void SetAggroRange(float range) { pAggroRange = range; }
+	bool HasAssistAggro() { return AssistAggro; }
 	inline const float GetAssistRange() const { return (spellbonuses.AssistRange == -1) ? pAssistRange : spellbonuses.AssistRange; }
 	inline void SetAssistRange(float range) { pAssistRange = range; }
 
@@ -937,8 +939,9 @@ public:
 	inline float GetCWPP() const { return(static_cast<float>(cur_wp_pause)); }
 	inline int GetCWP() const { return(cur_wp); }
 	void SetCurrentWP(int waypoint) { cur_wp = waypoint; }
-	virtual FACTION_VALUE GetReverseFactionCon(Mob* iOther) { return FACTION_INDIFFERENTLY; }
-
+	virtual FACTION_VALUE GetReverseFactionCon(Mob* iOther);
+	virtual FACTION_VALUE GetReverseFactionCon(Mob* iOther, bool ignore_feign_death);
+	
 	Timer* GetAIThinkTimer() { return AIthink_timer.get(); }
 	Timer* GetAIMovementTimer() { return AImovement_timer.get(); }
 	Timer& GetAttackTimer() { return attack_timer; }
@@ -1011,8 +1014,7 @@ protected:
 	int _GetFearSpeed() const;
 	void DoFearMovement();
 
-	virtual bool AI_EngagedCastCheck() { return(false); }
-	virtual bool AI_IdleCastCheck() { return(false); }
+
 
 
 	bool IsFullHP;
@@ -1281,6 +1283,8 @@ protected:
 	int cur_wp;
 	glm::vec4 m_CurrentWayPoint;
 	int cur_wp_pause;
+
+	bool AssistAggro;
 
 
 	int patrol;

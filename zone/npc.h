@@ -120,7 +120,6 @@ public:
 	void			AI_SetupNextWaypoint();
 	bool			AI_AddNPCSpells(uint32 iDBSpellsID);
 	bool			AI_AddNPCSpellsEffects(uint32 iDBSpellsEffectsID);
-	virtual bool	AI_EngagedCastCheck();
 	bool			AI_HasSpells() { return HasAISpell; }
 	bool			AI_HasSpellsEffects() { return HasAISpellEffects; }
 	void			ApplyAISpellEffects(StatBonuses* newbon);
@@ -128,10 +127,10 @@ public:
 	bool			IsAssisting() { return assisting; }	// if this is true, NPC will not call for help.  sets to false if NPC gets any hate
 	void			SetAssisting(bool value) { assisting = value; }
 
-	virtual bool	AI_IdleCastCheck();
 	virtual void	AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot);
 	void			TriggerAutoCastTimer() { if (!IsCasting() && AIautocastspell_timer) AIautocastspell_timer->Trigger(); }
 
+	void AIYellForHelp(Mob* sender, Mob* attacker);
 	void LevelScale();
 	void CalcNPCResists();
 	void CalcNPCRegen();
@@ -164,8 +163,11 @@ public:
 
 	bool	DatabaseCastAccepted(int spell_id);
 	bool	IsFactionListAlly(uint32 other_faction);
+	bool	IsGuard();
 	FACTION_VALUE CheckNPCFactionAlly(int32 other_faction);
-	virtual FACTION_VALUE GetReverseFactionCon(Mob* iOther);
+	virtual FACTION_VALUE GetReverseFactionCon(Mob* iOther, uint32 other_guild = 0);
+	virtual FACTION_VALUE GetReverseFactionCon(Mob* iOther, bool ignore_feign_death, uint32 other_guild = 0);
+	void	SetGuild(int32 guild = 0);
 	void	DescribeAggro(Client *towho, Mob *mob, bool verbose);
 
 	void	GoToBind(uint8 bindnum = 0)	{ GMMove(m_SpawnPoint.x, m_SpawnPoint.y, m_SpawnPoint.z, m_SpawnPoint.w); }
@@ -277,6 +279,8 @@ public:
 	void	SignalNPC(int _signal_id, const char* data = nullptr);
 
 	inline int32	GetNPCFactionID()	const { return npc_faction_id; }
+	inline uint32 GetNPCGuildID()	const { return npc_guild_id; }
+	bool GetNonGuildHostile()	{ return npc_nonguild_hostile; }
 	inline int32	GetPreCharmNPCFactionID()	const { return precharm_npc_faction_id; }
 	inline int32	GetPrimaryFaction()	const { return primary_faction; }
 	void	AddHate(Mob* other, int32 hate = 0, int32 damage = 0, bool bFrenzy = false, bool iAddIfNotExist = true) { hate_list.Add(other, hate, damage, bFrenzy, iAddIfNotExist); SetAssisting(false); }
@@ -513,6 +517,8 @@ protected:
 	int32	npc_faction_id;
 	int32	precharm_npc_faction_id;
 	int32	primary_faction;
+	uint32	npc_guild_id;
+	bool	npc_nonguild_hostile;
 
 	Timer	attacked_timer;		//running while we are being attacked (damaged)
 	Timer	swarm_timer;

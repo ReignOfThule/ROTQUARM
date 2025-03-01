@@ -109,6 +109,20 @@ public:
 		return NewEntity();
 	}
 
+	static NpcFaction GetNpcFactionEntry(
+		const std::vector<NpcFaction> &npc_factions,
+		int npc_faction_id
+	)
+	{
+		for (auto &npc_faction : npc_factions) {
+			if (npc_faction.id == npc_faction_id) {
+				return npc_faction;
+			}
+		}
+
+		return NewEntity();
+	}
+
 	static NpcFaction FindOne(
 		Database& db,
 		int npc_faction_id

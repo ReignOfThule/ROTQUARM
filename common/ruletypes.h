@@ -89,6 +89,8 @@ RULE_CATEGORY_END()
 RULE_CATEGORY( Pets )
 RULE_REAL( Pets, AttackCommandRange, 200, "")
 RULE_BOOL( Pets, UnTargetableSwarmPet, false, "")
+RULE_BOOL( Pets, PetFactionIgnoresOwnerFeignDeathStatus, true, "") // Controls whether an NPC considers a pet's owner's feign death status for the purposes of determining faction status
+
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(GM)
@@ -454,6 +456,8 @@ RULE_BOOL ( Combat, UseDiscTimerGroups, false, "After about 2004 or so, disc reu
 RULE_INT ( Combat, PvPMeleeDmgPct, 100, "Percentage of melee damage done in PvP combat. 100 = 100% i.e. unmodified")
 RULE_INT ( Combat, PvPSpellDmgPct, 62, "Percentage of spell damage done in PvP combat. 100 = 100% i.e. unmodified")
 RULE_INT ( Combat, PvPArcheryDmgPct, 100, "Percentage of archery damage done in PvP combat. 100 = 100% i.e. unmodified")
+RULE_INT( Combat, NPCAssistCap, 5, "Maximum number of NPC that will assist another NPC at once")
+RULE_INT( Combat, NPCAssistCapTimer, 6000, "Time a NPC will take to clear assist aggro cap space (milliseconds)")
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( NPC )
@@ -505,6 +509,15 @@ RULE_CATEGORY ( Merchant )
 RULE_BOOL( Merchant, UseGreed, false, "if true, merchants that do not already have a database set greed value will raise their prices the more they are sold to or bought from.  This is custom behavior and not classic")
 RULE_INT ( Merchant, GreedThreshold, 100, "How many purchases are required to or from a vendor before it becomes greedy and starts to raise their prices.")
 RULE_BOOL( Merchant, ClearTempList, true, "clear temp list after death if set true.")
+RULE_BOOL( Merchant, UsePriceMod, true, "Use faction/charisma price modifiers")
+RULE_REAL( Merchant, SellCostMod, 1.05, "Modifier for NPC sell price")
+RULE_REAL( Merchant, BuyCostMod, 0.95, "Modifier for NPC buy price")
+RULE_INT( Merchant, PriceBonusPct, 4, "Determines maximum price bonus from having good faction/CHA. Value is a percent")
+RULE_INT( Merchant, PricePenaltyPct, 4, "Determines maximum price penalty from having bad faction/CHA. Value is a percent")
+RULE_REAL( Merchant, ChaBonusMod, 3.45, "Determines CHA cap, from 104 CHA. 3.45 is 132 CHA at apprehensive. 0.34 is 400 CHA at apprehensive")
+RULE_REAL( Merchant, ChaPenaltyMod, 1.52, "Determines CHA bottom, up to 102 CHA. 1.52 is 37 CHA at apprehensive. 0.98 is 0 CHA at apprehensive")
+RULE_BOOL( Merchant, EnableAltCurrencySell, true, "Enables the ability to resell items to alternate currency merchants")
+RULE_BOOL( Merchant, AllowCorpse, false, "Setting whether dealers leave a corpse behind ")
 RULE_CATEGORY_END()
 
 RULE_CATEGORY ( Bazaar )

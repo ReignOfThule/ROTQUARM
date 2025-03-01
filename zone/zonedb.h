@@ -336,6 +336,7 @@ public:
 	bool		IsCorpseBackupOwner(uint32 corpse_id, uint32 char_id);
 
 	/* Faction   */
+	bool		GetNPCFactionList(uint32 npcfaction_id, int32* faction_id, int32* value, uint8* temp, int32* primary_faction = 0);
 	bool		GetFactionData(FactionMods* fd, uint32 class_mod, uint32 race_mod, uint32 deity_mod, int32 faction_id, uint8 texture_mod, uint8 gender_mod, uint32 base_race, bool skip_illusions = false); //needed for factions Dec, 16 2001
 	bool		GetFactionName(int32 faction_id, char* name, uint32 buflen); // needed for factions Dec, 16 2001
 	std::string GetFactionName(int32 faction_id);

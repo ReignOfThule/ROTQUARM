@@ -67,7 +67,8 @@ void command_viewplayerfaction(Client *c, const Seperator *sep)
 
 	if (npc != nullptr)
 	{
-		modified = t->GetFactionValue(npc);
+
+		modified = t->GetFactionLevel(c->CharacterID(), npc->CastToNPC()->GetNPCTypeID(), c->GetFactionRace(), c->GetClass(), c->GetDeity(), npc->CastToNPC()->GetPrimaryFaction(), npc);
 		c->Message(Chat::White, "Effective faction for '%s' is %d and includes extra modifiers such as invis and aggro", npc->GetName(), modified);
 	}
 }

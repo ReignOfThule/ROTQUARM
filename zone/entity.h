@@ -331,7 +331,6 @@ public:
 	void	QueueClientsGuild(Mob* sender, const EQApplicationPacket* app, bool ignore_sender = false, uint32 guildeqid = 0);
 	void	QueueClientsByTarget(Mob* sender, const EQApplicationPacket* app, bool iSendToSender = true, Mob* SkipThisMob = 0, bool ackreq = true,
 						bool HoTT = true, uint32 ClientVersionBits = 0xFFFFFFFF);
-
 	void	AEAttack(Mob *attacker, float dist = 18.0f, int targetLimit = 0);
 	void	AETaunt(Client *caster, float range = 0.0f);
 	void	AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_caster = true, int16 resist_adjust = 0, Mob* target = nullptr, bool initial_cast = true);
@@ -397,7 +396,6 @@ public:
 	int		FleeAllyCount(Mob *attacker, Mob *exclude);
 	int		StackedMobsCount(Mob *center);
 	void	AIYellForHelp(Mob* sender, Mob* attacker);
-	bool	AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float iRange, uint16 iSpellTypes);
 	Mob*	GetTargetForMez(Mob* caster);
 	uint32	CheckNPCsClose(Mob *center);
 	bool	CheckMobCloseForCollision(Mob *attacker, Mob *exclude, float x, float y, float dist, uint8 beaconType);
@@ -438,6 +436,7 @@ public:
 	inline const std::unordered_map<uint16, Corpse *> &GetCorpseList() { return corpse_list; }
 	inline const std::unordered_map<uint16, Object *> &GetObjectList() { return object_list; }
 	inline const std::unordered_map<uint16, Doors *> &GetDoorsList() { return door_list; }
+
 
 	void	DepopAll(int NPCTypeID, bool StartSpawnTimer = true);
 

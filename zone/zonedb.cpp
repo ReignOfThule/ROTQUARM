@@ -2649,6 +2649,26 @@ std::string ZoneDatabase::GetFactionName(int32 faction_id)
 	return faction_name;
 }
 
+bool ZoneDatabase::GetNPCFactionList(uint32 npcfaction_id, int32* faction_id, int32* value, uint8* temp, int32* primary_faction) {
+	if (npcfaction_id <= 0) {
+		if (primary_faction)
+			*primary_faction = npcfaction_id;
+		return true;
+	}
+	const NPCFactionList* nfl = GetNPCFactionEntry(npcfaction_id);
+	if (!nfl)
+		return false;
+	if (primary_faction)
+		*primary_faction = nfl->primaryfaction;
+	for (int i=0; i<MAX_NPC_FACTIONS; i++) {
+		faction_id[i] = nfl->factionid[i];
+		value[i] = nfl->factionvalue[i];
+		temp[i] = nfl->factiontemp[i];
+	}
+	return true;
+}
+
+
 //o--------------------------------------------------------------
 //| Name: SetCharacterFactionLevel; Dec. 20, 2001
 //o--------------------------------------------------------------

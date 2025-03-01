@@ -402,15 +402,11 @@ void Lua_Client::ChangeLastName(const char *in) {
 	self->ChangeLastName(in);
 }
 
-int Lua_Client::GetFactionLevel(uint32 char_id, uint32 race, uint32 class_, uint32 deity, uint32 faction, Lua_NPC npc) {
+int Lua_Client::GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 race, uint32 class_, uint32 deity, uint32 faction, Lua_NPC npc) {
 	Lua_Safe_Call_Int();
-	return static_cast<int>(self->GetFactionLevel(char_id, race, class_, deity, faction, npc, true));
+	return static_cast<int>(self->GetFactionLevel(char_id, npc_id, race, class_, deity, faction, npc));
 }
 
-int Lua_Client::GetFactionValue(Lua_NPC npc) {
-	Lua_Safe_Call_Int();
-	return static_cast<int>(self->GetFactionValue(npc));
-}
 
 void Lua_Client::SetFactionLevel(uint32 char_id, uint32 npc_id) {
 	Lua_Safe_Call_Void();
@@ -1474,8 +1470,7 @@ luabind::scope lua_register_client() {
 		.def("GetTimesRebirthed", (uint32(Lua_Client::*)(void))&Lua_Client::GetTimesRebirthed)
 		.def("MovePC", (void(Lua_Client::*)(int,float,float,float,float))&Lua_Client::MovePC)
 		.def("ChangeLastName", (void(Lua_Client::*)(const char *in))&Lua_Client::ChangeLastName)
-		.def("GetFactionLevel", (int(Lua_Client::*)(uint32,uint32,uint32,uint32,uint32,Lua_NPC))&Lua_Client::GetFactionLevel)
-		.def("GetFactionValue", (int(Lua_Client::*)(Lua_NPC))&Lua_Client::GetFactionValue)
+		.def("GetFactionLevel", (int(Lua_Client::*)(uint32,uint32,uint32,uint32,uint32,uint32,Lua_NPC))&Lua_Client::GetFactionLevel)
 		.def("SetFactionLevel", (void(Lua_Client::*)(uint32,uint32))&Lua_Client::SetFactionLevel)
 		.def("SetFactionLevel2", (void(Lua_Client::*)(uint32,int,int,int))&Lua_Client::SetFactionLevel2)
 		.def("GetRawItemAC", (int(Lua_Client::*)(void))&Lua_Client::GetRawItemAC)

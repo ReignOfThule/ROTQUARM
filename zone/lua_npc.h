@@ -35,6 +35,7 @@ public:
 	void AddLootTable(int id);
 	void RemoveItem(int item_id);
 	void RemoveItem(int item_id, int slot);
+	void SetGuild(int guild);
 	void ClearLootItems();
 	void AddLootCash(int copper, int silver, int gold, int platinum);
 	void RemoveLootCash();

@@ -3687,7 +3687,7 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 	con->playerid = GetID();
 	con->targetid = conin->targetid;
 	if (tmob->IsNPC())
-		con->faction = GetFactionLevel(character_id, race, class_, deity, (tmob->IsNPC()) ? tmob->CastToNPC()->GetPrimaryFaction() : 0, tmob); // Dec. 20, 2001; TODO: Send the players proper deity
+		con->faction = GetFactionLevel(character_id, tmob->CastToNPC()->GetNPCTypeID(), race, class_, deity, (tmob->IsNPC()) ? tmob->CastToNPC()->GetPrimaryFaction() : 0, tmob); // Dec. 20, 2001; TODO: Send the players proper deity
 	else
 		con->faction = 1;
 	con->level = GetLevelCon(tmob->GetLevel());
@@ -8757,7 +8757,7 @@ void Client::Handle_OP_ShopRequest(const EQApplicationPacket *app)
 	}
 
 	int primaryfaction = tmp->CastToNPC()->GetPrimaryFaction();
-	int factionlvl = GetFactionLevel(CharacterID(), GetRace(), GetClass(), GetDeity(), primaryfaction, tmp);
+	int factionlvl = GetFactionLevel(CharacterID(), tmp->CastToNPC()->GetNPCTypeID(), GetRace(), GetClass(), GetDeity(), primaryfaction, tmp);
 	if (factionlvl >= FACTION_DUBIOUSLY) {
 		MerchantRejectMessage(tmp, primaryfaction);
 		action = 0;
