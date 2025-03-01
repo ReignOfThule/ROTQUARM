@@ -700,6 +700,7 @@ luabind::scope lua_register_npc() {
 		.def("SetPetSpellID", (void(Lua_NPC::*)(int))&Lua_NPC::SetPetSpellID)
 		.def("GetMaxDamage", (uint32(Lua_NPC::*)(int))&Lua_NPC::GetMaxDamage)
 		.def("SetTaunting", (void(Lua_NPC::*)(bool))&Lua_NPC::SetTaunting)
+		.def("SetGuild", (void(Lua_NPC::*)(int32))&Lua_NPC::SetGuild)
 		.def("PickPocket", (void(Lua_NPC::*)(Lua_Client))&Lua_NPC::PickPocket)
 		.def("StartSwarmTimer", (void(Lua_NPC::*)(uint32))&Lua_NPC::StartSwarmTimer)
 		.def("DoClassAttacks", (void(Lua_NPC::*)(Lua_Mob))&Lua_NPC::DoClassAttacks)
