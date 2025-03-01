@@ -131,7 +131,8 @@ NPC::NPC(const NPCType *npc_type_data, Spawn2* in_respawn, const glm::vec4& posi
 	despawn_timer(1000),
 	m_SpawnPoint(position),
 	m_GuardPoint(-1.0f, -1.0f, -1.0f, 0.0f),
-	m_GuardPointSaved(0.0f, 0.0f, 0.0f, 0.0f)
+	m_GuardPointSaved(0.0f, 0.0f, 0.0f, 0.0f),
+	npc_guild_id(0)
 {
 	//What is the point of this, since the names get mangled..
 	Mob* mob = entity_list.GetMob(name);

@@ -221,7 +221,7 @@ void QuestManager::write(const char *file, const char *str) {
 	fclose (pFile);
 }
 
-Mob* QuestManager::spawn2(int npc_type, int grid, int unused, const glm::vec4& position, const char* name) {
+Mob* QuestManager::spawn2(int npc_type, int grid, int guild, const glm::vec4& position, const char* name) {
 	NPCType* tmp = (NPCType*)database.LoadNPCTypesData(npc_type);
 	char tmp_name[64];
 	if (!tmp)
@@ -239,6 +239,7 @@ Mob* QuestManager::spawn2(int npc_type, int grid, int unused, const glm::vec4& p
 		strcpy(tmp->name, tmp_name);
 
 	npc->AddLootTable(true);
+	npc->SetGuild(guild);
 	if (npc->DropsGlobalLoot()) {
 		npc->CheckGlobalLootTables();
 	}
@@ -251,7 +252,7 @@ Mob* QuestManager::spawn2(int npc_type, int grid, int unused, const glm::vec4& p
 	return npc;
 }
 
-Mob* QuestManager::unique_spawn(int npc_type, int grid, int unused, const glm::vec4& position) {
+Mob* QuestManager::unique_spawn(int npc_type, int grid, int guild, const glm::vec4& position) {
 	Mob *other = entity_list.GetMobByNpcTypeID(npc_type);
 	if(other != nullptr) {
 		return other;
@@ -262,6 +263,7 @@ Mob* QuestManager::unique_spawn(int npc_type, int grid, int unused, const glm::v
 	{
 		auto npc = new NPC(tmp, nullptr, position, GravityBehavior::Water);
 		npc->AddLootTable(true);
+		npc->SetGuild(guild);
 		if (npc->DropsGlobalLoot()) {
 			npc->CheckGlobalLootTables();
 		}
