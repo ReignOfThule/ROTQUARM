@@ -5154,6 +5154,44 @@ void Mob::FadeVoiceGraft()
 	}
 }
 
+void Mob::TempName(const char *newname)
+{
+	char temp_name[64];
+	char old_name[64];
+	strn0cpy(old_name, GetName(), 64);
+
+	if(newname)
+		strn0cpy(temp_name, newname, 64);
+
+	// Reset the name to the original if left null.
+	if(!newname) {
+		strn0cpy(temp_name, GetOrigName(), 64);
+		SetName(temp_name);
+		//CleanMobName(GetName(), temp_name);
+		strn0cpy(temp_name, GetCleanName(), 64);
+	}
+
+	// Remove Numbers before making name unique
+	EntityList::RemoveNumbers(temp_name);
+	// Make the new name unique and set it
+	entity_list.MakeNameUnique(temp_name);
+
+	// Send the new name to all clients
+	auto outapp = new EQApplicationPacket(OP_GMNameChange, sizeof(GMName_Struct));
+	GMName_Struct* mr = (GMName_Struct*) outapp->pBuffer;
+	strn0cpy(mr->oldname, old_name, 64);
+	strn0cpy(mr->gmname, old_name, 64);
+	strn0cpy(mr->newname, temp_name, 64);
+	mr->badname = 0;
+    mr->unknown[0] = 3;
+    mr->unknown[1] = 3;
+    mr->unknown[2] = 3;
+	entity_list.QueueClients(this, outapp);
+	safe_delete(outapp);
+
+	SetName(temp_name);
+}
+
 bool Mob::IsUnTargetable()
 {
 	if (GetBodyType() == BodyType::NoTarget || GetBodyType() == BodyType::NoTarget2 || GetBodyType() == BodyType::Special ||

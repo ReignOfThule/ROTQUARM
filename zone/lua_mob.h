@@ -277,6 +277,8 @@ public:
 	void SetGender(int in);
 	void SendIllusionPacket(luabind::adl::object illusion);
 	std::string GetGlobal(const char *varname);
+	void TempName();
+	void TempName(const char *newname);
 	void SetGlobal(const char *varname, const char *newvalue, int options, const char *duration);
 	void SetGlobal(const char *varname, const char *newvalue, int options, const char *duration, Lua_Mob other);
 	void TarGlobal(const char *varname, const char *value, const char *duration, int npc_id, int char_id, int zone_id);

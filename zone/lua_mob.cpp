@@ -1371,6 +1371,16 @@ void Lua_Mob::SendIllusionPacket(luabind::adl::object illusion) {
 		beard, aa_title, size);
 }
 
+void Lua_Mob::TempName() {
+	Lua_Safe_Call_Void();
+	self->TempName();
+}
+
+void Lua_Mob::TempName(const char *newname) {
+	Lua_Safe_Call_Void();
+	self->TempName(newname);
+}
+
 std::string Lua_Mob::GetGlobal(const char *varname) {
 	Lua_Safe_Call_String();
 	return self->GetGlobal(varname);
@@ -1882,6 +1892,8 @@ luabind::scope lua_register_mob() {
 		.def("SetRace", (void(Lua_Mob::*)(int))&Lua_Mob::SetRace)
 		.def("SetGender", (void(Lua_Mob::*)(int))&Lua_Mob::SetGender)
 		.def("SendIllusionPacket", (void(Lua_Mob::*)(luabind::adl::object))&Lua_Mob::SendIllusionPacket)
+		.def("TempName", (void(Lua_Mob::*)(void))&Lua_Mob::TempName)
+		.def("TempName", (void(Lua_Mob::*)(const char*))&Lua_Mob::TempName)
 		.def("GetGlobal", (std::string(Lua_Mob::*)(const char*))&Lua_Mob::GetGlobal)
 		.def("SetGlobal", (void(Lua_Mob::*)(const char*,const char*,int,const char*))&Lua_Mob::SetGlobal)
 		.def("SetGlobal", (void(Lua_Mob::*)(const char*,const char*,int,const char*,Lua_Mob))&Lua_Mob::SetGlobal)
