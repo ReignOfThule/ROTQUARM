@@ -127,7 +127,7 @@ OPTION(EQEMU_BUILD_SERVER "Build the game server." ON)
 OPTION(EQEMU_BUILD_ZONE_ONLY "Build the zone server only." OFF)
 OPTION(EQEMU_BUILD_LOGIN "Build the login server." ON)
 OPTION(EQEMU_BUILD_TESTS "Build utility tests." OFF)
-OPTION(EQEMU_BUILD_CLIENT_FILES "Build Client Import/Export Data Programs." OFF)
+OPTION(EQEMU_BUILD_CLIENT_FILES "Build Client Import/Export Data Programs." ON)
 OPTION(EQEMU_PREFER_LUA "Build with normal Lua even if LuaJIT is found." OFF)
 
 #PRNG options

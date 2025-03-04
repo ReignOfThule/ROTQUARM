@@ -333,7 +333,7 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 	EQ::ItemInstance *item = nullptr;
 
 	/* Check if Zone has Graveyard First */
-	if(!zone->HasGraveyard() || zone->GetGuildID() == GUILD_NONE && zone->GetZoneID() < 1000) {
+	if(!zone->HasGraveyard()) {
 		corpse_graveyard_timer.Disable();
 	}
 	corpse_graveyard_moved_timer.Disable();
@@ -610,7 +610,7 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, LootIt
 
 	LoadPlayerCorpseDecayTime(in_dbid, empty);
 
-	if (!zone->HasGraveyard() || wasAtGraveyard || zone->GetGuildID() == GUILD_NONE && zone->GetZoneID() < 1000){
+	if (!zone->HasGraveyard() || wasAtGraveyard){
 		corpse_graveyard_timer.Disable();
 	}
 	corpse_graveyard_moved_timer.Disable();
@@ -956,7 +956,7 @@ bool Corpse::Process() {
 		return true;
 	}
 
-	if (worldserver.Connected() && corpse_graveyard_timer.Check() && zone->GetGuildID() != GUILD_NONE) {
+	if (worldserver.Connected() && corpse_graveyard_timer.Check()) {
 		if (zone->HasGraveyard()) {
 			Save();
 
@@ -987,7 +987,7 @@ bool Corpse::Process() {
 		return false;
 	}
 
-	if (IsPlayerCorpse() && zone->HasGraveyard() && !corpse_graveyard_timer.Enabled() && zone->GetGuildID() != GUILD_NONE && zone->GetZoneID() >= 1000)
+	if (IsPlayerCorpse() && zone->HasGraveyard() && !corpse_graveyard_timer.Enabled())
 	{
 		// it already went to GY, prevent dragging it back out
 		if (!corpse_graveyard_moved_timer.Enabled())

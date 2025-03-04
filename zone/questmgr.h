@@ -215,6 +215,7 @@ public:
 	uint16 CreateDoor( const char* model, float x, float y, float z, float heading, uint8 opentype, uint16 size);
     int32 GetZoneID(const char *zone);
     const char *GetZoneLongName(const char *zone);
+	void CrossZoneSignal(uint8 update_type, int update_identifier, uint32 signal, const char* client_name = "");
 	void CrossZoneSignalPlayerByCharID(int charid, uint32 data);
 	void CrossZoneSignalNPCByNPCTypeID(uint32 npctype_id, int num, const char* data = nullptr);
 	void CrossZoneSignalPlayerByName(const char *CharName, uint32 data);
